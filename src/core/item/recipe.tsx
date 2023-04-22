@@ -36,15 +36,16 @@ export class Recipe {
         return this;
     }
 
-    async craft (player: Player, event?: BaseEvent) {
+    async craft (player: Player, amount: number, event?: BaseEvent) {
         for (let i of this.recipes) {
-            if (await player.countItem(i.id, i.nbt) < i.count) return {type: "insufficient.items", require: new ItemStack(i.id, Math.abs(i.count - await player.countItem(i.id, i.nbt)), i.nbt), recipe: i};
+            if (await player.countItem(i.id, i.nbt) < (i.count * amount)) return {type: "insufficient.items", require: new ItemStack(i.id, Math.abs((i.count * amount) - await player.countItem(i.id, i.nbt)), i.nbt), recipe: i};
         }
         for (let i of this.recipes) {
-            await player.drop(i.id, i.count, i.nbt);
+            await player.drop(i.id, i.count * amount, i.nbt);
         }
-        await player.give(this.result);
-        return {type: "success", recipes: this.recipes, result: this.result};
+        let stack = new ItemStack(this.result.id, this.result.count * amount, this.result.nbt);
+        await player.give(stack);
+        return {type: "success", recipes: this.recipes.map(i => new ItemStack(i.id, i.count * amount, i.nbt)), result: stack};
     }
 
 }
@@ -67,7 +68,7 @@ export namespace Recipe {
         for (let i of Item.all) {
             for (let t of Item.all) {
                 for (let transform of i.settings.data.transform) {
-                    if (i.settings.data.transform.includes(transform)) {
+                    if (i.settings.data.transform.includes(transform) && i.id != t.id) {
                         newRecipes.push(new Recipe(new ItemStack(String(t.id), 1, {})).recipe({id: String(i.id), nbt: {}, count: 1}));
                     }
                 }

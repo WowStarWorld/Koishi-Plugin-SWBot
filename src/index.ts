@@ -1,5 +1,7 @@
 import { Context, Service, Schema, Logger } from 'koishi';
 import path from "path";
+import _ from "lodash";
+
 
 let context: Context;
 
@@ -15,7 +17,7 @@ export class StarWorldBot extends Service {
 
     constructor (ctx: Context, public config: StarWorldBot.Config) {
         super (ctx, "swbot", true);
-        if (!context) context = ctx;
+        context = ctx;
         this.configPath = path.join(ctx.baseDir, "swbot");
         this.core = require("./core/index");
         this.logger = new Logger(config.botName || "SWBot");
@@ -37,6 +39,20 @@ export class StarWorldBot extends Service {
                 return await next();
             },
             true
+        );
+        ctx.component(
+            "swbot-player", async (attrs, children, session) => {
+                if (attrs.platform && attrs.id) return new this.core.Player(String(attrs.id), String(attrs.platform)).getNameWithIdentifier(session);
+                if (attrs.identifier instanceof this.core.Identifier) return new this.core.Player(attrs.identifier.path, attrs.identifier.namespace).getNameWithIdentifier(session);
+                return session.swbot.player.getNameWithIdentifier(session);
+            }
+        );
+        ctx.component(
+            "swbot-item", async (attrs, children, session) => {
+                if (attrs.id && attrs.count) return new this.core.ItemStack(String(attrs.id), Number(attrs.count), _.isPlainObject(attrs.nbt) ? attrs.nbt : {}).getNameWithIdentifier(session.swbot.player, session);
+                if (attrs.stack instanceof this.core.ItemStack) return attrs.stack.getNameWithIdentifier(session.swbot.player, session);
+                return "";
+            }
         );
     }
 

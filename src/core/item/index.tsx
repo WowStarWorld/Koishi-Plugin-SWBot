@@ -46,7 +46,7 @@ export class ItemStack {
     }
     
     async getNameWithIdentifier (player?: Player, event?: BaseEvent) {
-        return `${this.nbt ? "[" + h("code", "特殊") + "] " : ""}${await Item.findByIdentifier(this.id)?.getName?.(player, this, event) ?? "未知物品"} (${this.id}) * ${this.count}`;
+        return `${Object.keys(this.nbt).length ? "[" + h("code", "特殊") + "] " : ""}${await Item.findByIdentifier(this.id)?.getName?.(player, this, event) ?? "未知物品"} (${this.id}) * ${this.count}`;
     }
     
 }

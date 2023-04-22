@@ -4,9 +4,5 @@ export class BaseEvent {}
 
 
 export class CommandEvent extends BaseEvent {
-
-    constructor (public argv: Argv) {
-        super ();
-    }
-
+    constructor (public argv: Argv) { super (); }
 }

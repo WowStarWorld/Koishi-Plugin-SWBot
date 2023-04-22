@@ -41,7 +41,7 @@ export class Player {
     }
 
     async getPurse () {
-        return (await this.fix()).purse;
+        return Number((await this.fix()).purse);
     }
 
     async setPurse (money: number) {
@@ -49,7 +49,7 @@ export class Player {
     }
 
     async getExperience () {
-        return (await this.fix()).experience;
+        return Number((await this.fix()).experience);
     }
 
     async setExperience (experience: number) {
@@ -124,12 +124,12 @@ export class Player {
     }
 
     async hasItem (id: string | Identifier, nbt?: NBTCompound) {
-        return !!(await this.fix()).inventory.items.find(i => i.id === id && _.isEqual(i.nbt, nbt));
+        return !!(await this.fix()).inventory.items.find(i => i.id === id && nbt ? _.isEqual(i.nbt, nbt) : true);
     }
 
     async countItem (id: string | Identifier, nbt?: NBTCompound) {
         if (!await this.hasItem(id, nbt)) return 0;
-        return (await this.fix()).inventory.items.find(i => i.id === id && _.isEqual(i.nbt, nbt))?.count ?? 0;
+        return (await this.fix()).inventory.items.find(i => i.id === id && nbt ? _.isEqual(i.nbt, nbt) : true)?.count ?? 0;
     }
 
     toString () { return `${this.getIdentifier()}`; }

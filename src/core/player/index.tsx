@@ -81,10 +81,12 @@ export class Player {
         if (!player.inventory.items.some(i => i.id == itemStack.id && _.isEqual(i.nbt, itemStack.nbt))) {
             player.inventory.items.push(itemStack.toObject());
             if (event) result = await Item.findByIdentifier(itemStack.id).onGive(this, null, itemStack, event);
+            else result = true;
         } else for (let i of player.inventory.items) {
             if (i.id == itemStack.id && _.isEqual(i.nbt, itemStack.nbt)) {
                 i.count += itemStack.count;
                 if (event) result = await Item.findByIdentifier(itemStack.id).onGive(this, new ItemStack(itemStack.id, itemStack.count, itemStack.nbt), itemStack, event);
+                else result = true;
                 break;
             }
         }
@@ -95,15 +97,19 @@ export class Player {
     async drop (id: string, amount: number, nbt?: NBTCompound, event?: BaseEvent) {
         let player = await this.fix();
         let removeAmount = amount;
-        for (let i of Object.keys(player.inventory).map(i => Number(i))) {
-            let item = player.inventory[i];
+        for (let i of Object.keys(player.inventory.items).map(i => Number(i))) {
+            let item = player.inventory.items[i];
             if (item.id == id && nbt ? _.isEqual(nbt, item.nbt) : true) {
                 let itemCount = item.count;
                 if (event && await Item.findByIdentifier(item.id).onDrop(this, new ItemStack(item.id, item.count, item.nbt), new ItemStack(id, amount <= itemCount ? amount : itemCount, nbt ?? item.nbt), event)) continue;
-                if (removeAmount <= item.count) item.count -= removeAmount;
-                removeAmount -= itemCount;
-                player.inventory = (await this.fix()).inventory;
-                if (item.count < 1) delete player.inventory[i];
+                if (removeAmount <= item.count) {
+                    item.count -= removeAmount;
+                    removeAmount -= (itemCount - item.count);
+                } else {
+                    item.count = 0;
+                    removeAmount -= itemCount;
+                }
+                if (item.count < 1) delete player.inventory.items[i];
             }
             if (removeAmount < 1) break;
         }
@@ -115,6 +121,15 @@ export class Player {
     async getNameWithIdentifier (session: Session) {
         if (session.platform === this.platform) return `${(await session.bot.getUser(this.id)).username} (${this.getIdentifier()})`;
         else return `${this.getIdentifier()}`;
+    }
+
+    async hasItem (id: string | Identifier, nbt?: NBTCompound) {
+        return !!(await this.fix()).inventory.items.find(i => i.id === id && _.isEqual(i.nbt, nbt));
+    }
+
+    async countItem (id: string | Identifier, nbt?: NBTCompound) {
+        if (!await this.hasItem(id, nbt)) return 0;
+        return (await this.fix()).inventory.items.find(i => i.id === id && _.isEqual(i.nbt, nbt))?.count ?? 0;
     }
 
     toString () { return `${this.getIdentifier()}`; }

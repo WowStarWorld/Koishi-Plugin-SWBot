@@ -34,7 +34,6 @@ export class StarWorldBot extends Service {
                 session.swbot = {
                     player: new this.core.Player(session.userId, session.platform)
                 };
-                await session.swbot.player.give(new this.core.ItemStack("swbot:iron_ingot", 10));
                 return await next();
             },
             true

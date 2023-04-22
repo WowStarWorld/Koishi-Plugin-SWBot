@@ -4,10 +4,51 @@ import _ from "lodash";
 import { Player } from "../player";
 import { BaseEvent } from "../event";
 import { Identifier } from "../utils";
+import { h } from "koishi";
 
 export interface ItemState {
     name: string;
     tooltip: string;
+}
+
+export class ItemStack {
+    
+    
+    constructor (public id: string, public count: number = 1, public nbt: NBTCompound = {}) {
+        if (typeof id != "string" || typeof count != "number" || !nbt) throw new TypeError(`Invalid parameter, requires string, number, NBTCompound`);
+        if (count < 0 || !_.isSafeInteger(count)) throw new TypeError(`Parameter 'count' must be a integer (>=0)`);
+    }
+    
+    serialize () {
+        return JSON.stringify({id: this.id, count: this.count, nbt: this.nbt});
+    }
+    
+    deserialize (data: string) {
+        let stack = JSON.parse(data);
+        return new ItemStack(stack.id, stack.count, stack.nbt);
+    }
+    
+    toObject () {
+        return {id: this.id, count: this.count, nbt: this.nbt};
+    }
+    
+    decrement (amount: number) {
+        if (amount < 0 || !_.isSafeInteger(amount) || !_.isInteger(amount)) throw new TypeError(`Parameter 'amount' must be a integer (>=0)`);
+        if (this.count - amount < 1 || !_.isSafeInteger(this.count - amount)) this.count = 0;
+        this.count -= amount;
+        return this;
+    }
+    
+    increment (amount: number) {
+        if (amount < 0 || !_.isSafeInteger(amount) ) throw new TypeError(`Parameter 'amount' must be a positive integer (>=0)`);
+        this.count += amount;
+        return this;
+    }
+    
+    async getNameWithIdentifier (player?: Player, event?: BaseEvent) {
+        return `${this.nbt ? "[" + h("code", "特殊") + "] " : ""}${await Item.findByIdentifier(this.id)?.getName?.(player, this, event) ?? "未知物品"} (${this.id}) * ${this.count}`;
+    }
+    
 }
 
 export abstract class Item {
@@ -79,46 +120,17 @@ export namespace Item {
 
 }
 
-export namespace Items {
-    export const UNKNOWN_ITEM = Item.register(new UnknownItem);
+export class IronIngotItem extends Item {
+    
+    id: Identifier = new Identifier("swbot", "iron_ingot");
+    
+    data = {name: "铁锭"};
+    
 }
 
-export class ItemStack {
-
-
-    constructor (public id: string, public count: number = 1, public nbt: NBTCompound = {}) {
-        if (typeof id != "string" || typeof count != "number" || !nbt) throw new TypeError(`Invalid parameter, requires string, number, NBTCompound`);
-        if (count < 0 || !_.isSafeInteger(count)) throw new TypeError(`Parameter 'count' must be a integer (>=0)`);
-    }
-
-    serialize () {
-        return JSON.stringify({id: this.id, count: this.count, nbt: this.nbt});
-    }
-
-    deserialize (data: string) {
-        let stack = JSON.parse(data);
-        return new ItemStack(stack.id, stack.count, stack.nbt);
-    }
-
-    toObject () {
-        return {id: this.id, count: this.count, nbt: this.nbt};
-    }
-
-    decrement (amount: number) {
-        if (amount < 0 || !_.isSafeInteger(amount) || !_.isInteger(amount)) throw new TypeError(`Parameter 'amount' must be a integer (>=0)`);
-        if (this.count - amount < 1 || !_.isSafeInteger(this.count - amount)) this.count = 0;
-        this.count -= amount;
-        return this;
-    }
-
-    increment (amount: number) {
-        if (amount < 0 || !_.isSafeInteger(amount) ) throw new TypeError(`Parameter 'amount' must be a positive integer (>=0)`);
-        this.count += amount;
-        return this;
-    }
-
-    toString (player?: Player, event?: BaseEvent) {
-        return `${Item.findByIdentifier(this.id).getName(player, this, event)} (${this.id}) * ${this.count}`;
-    }
-
+export namespace Items {
+    
+    export const UNKNOWN_ITEM = Item.register(new UnknownItem);
+    export const IRON_INGOT_ITEM = Item.register(new IronIngotItem);
+    
 }

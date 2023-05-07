@@ -49,6 +49,10 @@ export class ItemStack {
         return `${Object.keys(this.nbt).length ? "[" + h("code", "特殊") + "] " : ""}${await Item.findByIdentifier(this.id)?.getName?.(player, this, event) ?? "未知物品"} (${this.id}) * ${this.count}`;
     }
     
+    isEqual (stack: ItemStack) {
+        return stack.id === this.id && _.isEqual(this.nbt, stack.nbt) && stack.count === this.count;
+    }
+    
 }
 
 export abstract class Item {

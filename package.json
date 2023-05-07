@@ -16,10 +16,10 @@
     "plugin"
   ],
   "peerDependencies": {
-    "koishi": "^4.12.4"
+    "koishi": ">=^4.12.7"
   },
   "dependencies": {
-    "lodash": "^4.17.21",
-    "yaml": "^2.2.1"
+    "lodash": ">=^4.17.21",
+    "yaml": ">=^2.2.1"
   }
 }

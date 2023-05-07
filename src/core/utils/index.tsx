@@ -21,33 +21,41 @@ export class Identifier {
 export class Matcher <T, R = undefined> {
 
     public all: [T, (value: T) => any, boolean][] = [];
-
+    public default: ((value: T) => R | unknown) = () => undefined;
+    
     constructor (public value: T) {}
 
     set (value: T): Matcher<T, R> { this.value = value; return this; }
     clear (): Matcher <T, R> { this.all = []; return this; }
 
-    case <Z> (value: T, fullMatch: (value: T) => Z, strong = false): Matcher<T, Z | R | undefined> {
+    caseGet <Z> (value: T, fullMatch: (value: T) => Z, strong = false): Matcher<T, Z | R | undefined> {
         this.all.push([value, fullMatch, strong]);
         return this;
     }
 
-    caseValue <Z> (value: T, fullMatch: Z, strong = false): Matcher<T, Z | R | undefined> {
-        this.all.push([value, () => fullMatch, strong]);
+    case <Z> (value: T, fullMatch: Z, strong = false): Matcher<T, Z | R | undefined> {
+        return this.caseGet(value, () => fullMatch, strong);
+    }
+    
+    elseGet <Z> (callback: (value: T) => Z): Matcher<T, Z | R | undefined> {
+        this.default = callback;
         return this;
     }
+    
+    else <Z> (value: Z): Matcher<T, Z | R | undefined> {
+        return this.elseGet(() => value);
+    }
+
 
     get (): R | undefined {
         let found = this.all.find(i => i [2] ? i[0] === this.value: i[0] == this.value);
-        return found ? found?.[1]?.(this.value) as R : undefined;
+        return (found ? found?.[1]?.(this.value) : this.default(this.value)) as R;
     }
-
+    
 }
-
 
 export function useConfig (name: string) {
     let pathName = path.join(getContext().swbot.configPath, name);
     fs.mkdirSync(path.dirname(pathName));
     return pathName;
 }
-

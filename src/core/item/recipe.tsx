@@ -52,8 +52,16 @@ export class Recipe {
 
 export namespace Recipe {
 
+    export type MiddleWare = (recipes: Recipe[], next: () => Recipe[]) => Recipe[];
+    
     export const all: Recipe[] = [];
-
+    export const middleware: ((recipes: Recipe[]) => Recipe[])[] = [];
+    
+    export function use (fn: typeof middleware[0]) {
+        middleware.push(fn);
+        return Recipe;
+    }
+    
     export function register (recipe: Recipe) {
         all.push(recipe);
         return recipe;
@@ -73,6 +81,9 @@ export namespace Recipe {
                     }
                 }
             }
+        }
+        for (let i of middleware) {
+            newRecipes = i(newRecipes);
         }
         return newRecipes;
     }

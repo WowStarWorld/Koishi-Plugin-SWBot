@@ -8,16 +8,18 @@ import { Session } from "koishi";
 
 let ctx = getContext();
 
+export interface PlayerMeta {
+    id: string;
+    inventory: {items: ReturnType<ItemStack["toObject"]>[]};
+    purse: number;
+    experience: number;
+    created: Date;
+}
 
 declare module "koishi" {
 
     interface Tables {
-        "swbot.players": {
-            id: string;
-            inventory: {items: ReturnType<ItemStack["toObject"]>[]};
-            purse: number;
-            experience: number;
-        }
+        "swbot.players": PlayerMeta;
     }
 
 }
@@ -28,7 +30,8 @@ ctx.model.extend(
         id: "string",
         inventory: "json",
         experience: "integer",
-        purse: "float"
+        purse: "float",
+        created: "time"
     }
 );
 
